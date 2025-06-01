@@ -1,7 +1,6 @@
 import { AxiosError } from "axios";
 import api from "../api"
 import type { UserRegistration } from "../../types/userTypes";
-import { Rss } from "lucide-react";
 
 export const getProfile = async (userId: string) => {
     try {

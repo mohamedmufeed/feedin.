@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react"
-import { ChevronLeft, ChevronRight, ClockFading } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import profileAvathar from "../../assets/user.png";
 import AdminHeader from "../../components/admin/AdminHeader";

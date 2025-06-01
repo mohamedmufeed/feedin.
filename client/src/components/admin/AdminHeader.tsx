@@ -1,6 +1,5 @@
-import React, {  useState } from 'react'
+import React from 'react'
 import { IoChevronBackOutline } from "react-icons/io5";
-import profile from "../../assets/user.png";
 import { useNavigate } from 'react-router-dom';
 
 
@@ -9,7 +8,6 @@ interface HeaderProps {
 }
 
 const AdminHeader: React.FC<HeaderProps> = ({ heading }) => {
-  const [profileOpen, setProfileOpen] = useState(false)
   const navigate = useNavigate()
   return (
     <div>
