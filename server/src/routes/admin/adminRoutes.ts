@@ -8,6 +8,8 @@ router
   .get("/users", protect, getUsers)
   .patch("/users/:id/block", protect, blockOrUnblockUser)
 
+  // dasd
+
 //  preferences
 
 router

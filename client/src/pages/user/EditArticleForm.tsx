@@ -5,6 +5,10 @@ import Navbar from '../../components/home/Navbar';
 import { editArticle, getArticleDetails } from '../../service/user/articleService';
 import { useNavigate, useParams } from 'react-router-dom';
 import { uploadToCloudinary } from '../../utils/uploadToCloudinary';
+import { getPreferences } from '../../service/user/profileService';
+import type { IPreferences } from './ArticleForm';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../redux/store/store';
 
 const EditArticleForm = () => {
     const [title, setTitle] = useState('');
@@ -15,50 +19,31 @@ const EditArticleForm = () => {
     const [selectedCategory, setSelectedCategory] = useState('');
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [categories, setCategories] = useState<IPreferences[]>([])
     const { id } = useParams()
-    const categories = [
+    const userId = useSelector((state: RootState) => state.auth.user)
+    const lastName =useSelector((state: RootState) => state.auth.lastName)
+    useEffect(() => {
+        const fetchArticleData = async () => {
+            if (!id) return
+            try {
+                const response = await getArticleDetails(id)
+                const article = response?.article
+                setTitle(article.title)
+                setCoverImage(article.coverImage)
+                setSubtitle(article.subtitle)
+                setSelectedCategory(article.category)
+                setContent(article.content)
+                console.log(response)
 
-        "Technology",
-        "Science",
-        "Health",
-        "Travel",
-        "Education",
-        "Finance",
-        "Sports",
-        "Entertainment",
-        "Artificial Intelligence",
-        "Machine Learning",
-        "Design",
-        "Photography",
-        "Music",
-        "Cooking",
-        "Gaming",
-        "Books",
-        "Movies",
-        "Fitness",
-
-    ];
-  useEffect(()=>{
-      const fetchArticleData = async () => {
-        if (!id) return
-        try {
-            const response = await getArticleDetails(id)
-            const article= response?.article
-            setTitle(article.title)
-            setCoverImage(article.coverImage)
-            setSubtitle(article.subtitle)
-            setSelectedCategory(article.category)
-            setContent(article.content)
-            console.log(response)
-
-        } catch (error) {
-            console.error("Error on fetching article")
+            } catch (error) {
+                console.error("Error on fetching article")
+            }
         }
-    }
-    if(id){
-        fetchArticleData()
-    }
-  },[])
+        if (id) {
+            fetchArticleData()
+        }
+    }, [])
 
     const navigate = useNavigate()
     const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -75,6 +60,20 @@ const EditArticleForm = () => {
             fileInputRef.current.value = '';
         }
     };
+
+    useEffect(() => {
+        const fetchPreferences = async () => {
+            try {
+                const response = await getPreferences()
+                console.log(response.preferences)
+                setCategories(response.preferences);
+
+            } catch (error) {
+                console.error("Failed to load preferences. Please try again.");
+            }
+        };
+        fetchPreferences()
+    }, [userId])
 
     const handlePublish = async () => {
 
@@ -98,12 +97,12 @@ const EditArticleForm = () => {
 
     };
 
-    const handleCategorySelect = (categoryId: string) => {
-        setSelectedCategory(categoryId);
+    const handleCategorySelect = (categoryName: string) => {
+        setSelectedCategory(categoryName);
         setShowCategoryDropdown(false);
     };
 
-    const selectedCategoryData = categories.find(cat => cat === selectedCategory);
+    const selectedCategoryData = categories.find(cat => cat.name === selectedCategory);
 
     const wordCount = content.split(' ').filter(word => word.length > 0).length;
     const readTime = Math.max(1, Math.ceil(wordCount / 200));
@@ -122,14 +121,14 @@ const EditArticleForm = () => {
                     <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
                         {/* Left Section - Draft Status */}
                         <div className="flex items-center space-x-4">
-                         <div onClick={()=>navigate(-1)}>
-                            <IoIosArrowRoundBack className='w-7 h-7'/>
-                         </div>
+                            <div onClick={() => navigate(-1)}>
+                                <IoIosArrowRoundBack className='w-7 h-7' />
+                            </div>
                             <div className="flex items-center space-x-2">
                                 <div className={`w-2 h-2 rounded-full ${isDraft ? 'bg-orange-400' : 'bg-green-500'}`}></div>
                                 <span className="text-sm text-gray-600">
                                     {isDraft ? 'Draft in' : 'Published in'}
-                                    <span className="font-medium text-gray-800 ml-1">Mohamedmufeed</span>
+                                    <span className="font-medium text-gray-800 ml-1">{lastName}</span>
                                 </span>
                             </div>
                             <span className="text-xs text-gray-400">• Auto-saved</span>
@@ -184,11 +183,11 @@ const EditArticleForm = () => {
                                 {categories.map((category, index) => (
                                     <button
                                         key={index}
-                                        onClick={() => handleCategorySelect(category)}
+                                        onClick={() => handleCategorySelect(category.name)}
                                         className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100 last:border-b-0 flex items-center"
                                     >
                                         <span className={`px-3 py-1 rounded-full text-sm font-medium`}>
-                                            {category}
+                                            {category.name}
                                         </span>
                                     </button>
                                 ))}
@@ -197,7 +196,7 @@ const EditArticleForm = () => {
                     </div>
                     {selectedCategory && (
                         <p className="text-xs text-gray-500 mt-2">
-                            Your article will be published in the {selectedCategoryData} category
+                            Your article will be published in the {selectedCategoryData?.name} category
                         </p>
                     )}
                 </div>
@@ -287,7 +286,7 @@ const EditArticleForm = () => {
                             <span>{readTime} min read</span>
                             {selectedCategoryData && (
                                 <span className={`px-2 py-1 rounded-full text-xs font-medium`}>
-                                    {selectedCategoryData}
+                                    {selectedCategoryData.name}
                                 </span>
                             )}
                         </div>

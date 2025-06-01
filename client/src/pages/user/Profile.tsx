@@ -36,26 +36,7 @@ const Profile = () => {
   const [availablePreferences, setAvailablePreferences] = useState<IPreferences[]>([])
   const userId = useSelector((state: RootState) => state.auth.user);
 
-  // const availablePreferences = [
-  //   "Technology",
-  //   "Science",
-  //   "Health",
-  //   "Travel",
-  //   "Education",
-  //   "Finance",
-  //   "Sports",
-  //   "Entertainment",
-  //   "Artificial Intelligence",
-  //   "Machine Learning",
-  //   "Design",
-  //   "Photography",
-  //   "Music",
-  //   "Cooking",
-  //   "Gaming",
-  //   "Books",
-  //   "Movies",
-  //   "Fitness",
-  // ];
+ 
 
   const validateForm = useCallback((): boolean => {
     const newErrors: ProfileErrors = {};
