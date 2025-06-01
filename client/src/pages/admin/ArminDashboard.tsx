@@ -2,8 +2,27 @@
 import AdminSidebar from '../../components/admin/AdminSidebar';
 import { Users, Layers, Briefcase } from 'lucide-react';
 import AdminHeader from '../../components/admin/AdminHeader';
-
+import { useEffect, useState } from 'react';
+import { dashBoardStats } from '../../service/admin/dashboardSerive';
+interface ISats{
+users:number;
+preferences:number;
+articles:number
+}
 const AdminDashboard = () => {
+  const [data,setData]=useState<ISats>()
+
+useEffect(()=>{
+  const fetchStats=async()=>{
+    try {
+      const response=await dashBoardStats()
+      setData(response.data)
+    } catch (error) {
+      console.error("Error on fetching stats")
+    }
+  }
+  fetchStats()
+},[])
   return (
     <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar />
@@ -20,7 +39,7 @@ const AdminDashboard = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Total Users</p>
-                <h2 className="text-xl font-semibold text-gray-800">150</h2>
+                <h2 className="text-xl font-semibold text-gray-800">{data?.users}</h2>
               </div>
             </div>
 
@@ -29,8 +48,8 @@ const AdminDashboard = () => {
                 <Layers size={28} />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Total Categories</p>
-                <h2 className="text-xl font-semibold text-gray-800">12</h2>
+                <p className="text-sm text-gray-500">Total Preferences</p>
+                <h2 className="text-xl font-semibold text-gray-800">{data?.preferences}</h2>
               </div>
             </div>
 
@@ -39,8 +58,8 @@ const AdminDashboard = () => {
                 <Briefcase size={28} />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Total Jobs</p>
-                <h2 className="text-xl font-semibold text-gray-800">88</h2>
+                <p className="text-sm text-gray-500">Total Articles </p>
+                <h2 className="text-xl font-semibold text-gray-800">{data?.articles}</h2>
               </div>
             </div>
           </div>
