@@ -31,22 +31,60 @@ export const createArticle = async (req: Request, res: Response) => {
 export const getPersonalizedFeed = async (req: Request, res: Response) => {
     try {
         const userId = req.params.id
+        const page = parseInt(req.query.page as string) || 1
+        const limit = parseInt(req.query.limit as string) || 9
+        const skip = (page - 1) * limit
+
         const user = await User.findById(userId)
         if (!user) {
             res.status(HttpStatus.NOT_FOUND).json({ message: "User not found" })
             return
         }
         const userpreferences = user.preferences
-        const articles = await Article.find({ category: { $in: userpreferences }, _id: { $nin: user.blockedArticles }, isDeleted: false }).populate("author", "profileImage firstName lastName").sort({ createdAt: -1 })
-        res.status(HttpStatus.OK).json({ success: true, message: "Personalized articles found sucsesssfull", articles })
+        const articles = await Article.find({ category: { $in: userpreferences }, _id: { $nin: user.blockedArticles }, isDeleted: false })
+            .populate("author", "profileImage firstName lastName")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+
+        const totalCount = await Article.countDocuments({
+            category: { $in: userpreferences },
+            _id: { $nin: user.blockedArticles },
+            isDeleted: false
+        });
+
+
+      res.status(HttpStatus.OK).json({
+            success: true,
+            message: "Personalized articles fetched successfully",
+            articles,
+            totalCount,
+            currentPage: page,
+            totalPages: Math.ceil(totalCount / limit),
+            hasMore: page * limit < totalCount
+        });
+
     } catch (error) {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" })
     }
 }
+
 export const getFeed = async (req: Request, res: Response) => {
     try {
-        const articles = await Article.find({ isDeleted: false }).populate("author", "profileImage firstName lastName").sort({ createdAt: -1 })
-        res.status(HttpStatus.OK).json({ success: true, message: "articles found sucsesssfull", articles })
+        const page = parseInt(req.query.page as string) || 1
+        const limit = parseInt(req.query.limit as string) || 9
+        const skip = (page - 1) * limit
+        const articles = await Article.find({ isDeleted: false }).populate("author", "profileImage firstName lastName").sort({ createdAt: -1 }).skip(skip).limit(limit)
+        const totalCount = await Article.countDocuments({ isDeleted: false});
+    res.status(HttpStatus.OK).json({ 
+            success: true, 
+            message: "Articles found successfully",
+            articles,
+            totalCount,
+            currentPage: page,
+            totalPages: Math.ceil(totalCount / limit),
+            hasMore: page * limit < totalCount 
+        })
     } catch (error) {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" })
     }

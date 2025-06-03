@@ -17,9 +17,14 @@ export const createArticle = async (articleData: Partial<IArticle>, userId: stri
     }
 }
 
-export const getPersonalizedFeed = async (userId: string) => {
+export const getPersonalizedFeed = async (userId: string, page:number, limit:number) => {
     try {
-        const response = await api.get(`user/article/${userId}/personalized-feed`)
+        const response = await api.get(`user/article/${userId}/personalized-feed`,{
+            params:{
+                page,
+                limit
+            }
+        })
         return response.data
 
     } catch (error) {
@@ -32,9 +37,14 @@ export const getPersonalizedFeed = async (userId: string) => {
         }
     }
 }
-export const getUserFeed = async () => {
+export const getUserFeed = async (page:number, limit:number) => {
     try {
-        const response = await api.get(`user/article/feed`)
+        const response = await api.get(`user/article/feed`,{
+            params:{
+                page,
+                limit
+            }
+        })
         return response.data
 
     } catch (error) {

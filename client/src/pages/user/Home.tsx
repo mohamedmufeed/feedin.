@@ -7,6 +7,7 @@ import { blockArticle, getLatestArticle, getPersonalizedFeed, getUserFeed, toogg
 import { useSelector } from "react-redux";
 import type { RootState } from "../../redux/store/store";
 import { CiCircleMinus } from "react-icons/ci";
+import { initializeReactionMaps } from "../../helper/mapLogic";
 
 const Home = () => {
   const [likesMap, setLikesMap] = useState<Record<string, string[]>>({});
@@ -17,6 +18,10 @@ const Home = () => {
   const navigate = useNavigate();
   const userId = useSelector((state: RootState) => state.auth?.user);
   const isAdmin = useSelector((state: RootState) => state.auth.isAdmin)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false); 
+  const limit = 7;
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -24,55 +29,56 @@ const Home = () => {
     day: "numeric",
   });
 
-
   useEffect(() => {
     const fetchUserFeed = async () => {
+      if (loading) return; 
+      
       try {
+        setLoading(true);
+        
         if (userId) {
-          const response = await getPersonalizedFeed(userId);
+          const response = await getPersonalizedFeed(userId, page, limit);
           if (response.success) {
-            setpersonalizedArticle(response.articles);
-            const initialLikesMap: Record<string, string[]> = {};
-            const initialDislikesMap: Record<string, string[]> = {};
-            response.articles.forEach((article: IArticle) => {
-              if (article._id) {
-                initialLikesMap[article._id] = article.likes || [];
-                initialDislikesMap[article._id] = article.dislikes || [];
-              }
+            setpersonalizedArticle((prev) => {
+              const existingIds = new Set(prev.map(article => article._id));
+              const newArticles = response.articles.filter((article:IArticle) => !existingIds.has(article._id));
+              return [...prev, ...newArticles];
             });
-
-            setLikesMap(initialLikesMap);
-            setDislikesMap(initialDislikesMap);
+            
+            setHasMore(response.hasMore);
+            
+            const { likes, dislikes } = initializeReactionMaps(response.articles);
+            setLikesMap(prevLikes => ({ ...prevLikes, ...likes }));
+            setDislikesMap(prevDislikes => ({ ...prevDislikes, ...dislikes }));
           }
         } else {
-          const response = await getUserFeed();
+          const response = await getUserFeed(page, limit);
           if (response.success) {
-            setpersonalizedArticle(response.articles)
-            const initialLikesMap: Record<string, string[]> = {};
-            const initialDislikesMap: Record<string, string[]> = {};
-
-            response.articles.forEach((article: IArticle) => {
-              if (article._id) {
-                initialLikesMap[article._id] = article.likes || [];
-                initialDislikesMap[article._id] = article.dislikes || [];
-              }
+            setpersonalizedArticle((prev) => {
+              const existingIds = new Set(prev.map(article => article._id));
+              const newArticles = response.articles.filter((article:IArticle) => !existingIds.has(article._id));
+              return [...prev, ...newArticles];
             });
-
-            setLikesMap(initialLikesMap);
-            setDislikesMap(initialDislikesMap);
+            
+            setHasMore(response.hasMore);
+            
+            const { likes, dislikes } = initializeReactionMaps(response.articles);
+            setLikesMap(prevLikes => ({ ...prevLikes, ...likes }));
+            setDislikesMap(prevDislikes => ({ ...prevDislikes, ...dislikes }));
           }
         }
       } catch (error) {
         console.error("Error on user feed");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchUserFeed();
-  }, [userId]);
+  }, [userId, page]);
 
   const handleLike = async (articleId: string) => {
     if (!userId) return navigate("/login");
-
     try {
       const response = await tooggleLike(articleId, userId);
 
@@ -140,21 +146,23 @@ const Home = () => {
         const response = await getLatestArticle()
         setLatestArticle(response.articles)
       } catch (error) {
-        console.error("Error on geting latest article")
+        console.error("Error on getting latest article")
       }
     }
     fetchLatestArticles()
   }, [])
 
-
   useEffect(() => {
-    if (isAdmin) {
-      navigate("/admin/dashboard")
-    } else {
-      navigate("/")
+    if (userId && isAdmin) {
+      navigate("/admin/dashboard");
     }
-  }, [userId])
+  }, [userId, isAdmin]);
 
+  const handleLoadMore = () => {
+    if (hasMore && !loading) {
+      setPage(prev => prev + 1);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50" style={{ fontFamily: "Mulish, sans-serif" }}>
@@ -229,8 +237,8 @@ const Home = () => {
                                 <button
                                   onClick={() => handleLike(article._id || "")}
                                   className={`flex items-center space-x-1 transition-colors cursor-pointer ${isLikedByUser(article._id || "")
-                                      ? "text-green-500"
-                                      : "text-gray-500 hover:text-green-600"
+                                    ? "text-green-500"
+                                    : "text-gray-500 hover:text-green-600"
                                     }`}
                                 >
                                   <BiLike className="w-5 h-5" />
@@ -240,8 +248,8 @@ const Home = () => {
                                 <button
                                   onClick={() => handleDislike(article._id || "")}
                                   className={`flex items-center space-x-1 transition-colors cursor-pointer ${isDislikedByUser(article._id || "")
-                                      ? "text-red-500"
-                                      : "text-gray-500 hover:text-red-600"
+                                    ? "text-red-500"
+                                    : "text-gray-500 hover:text-red-600"
                                     }`}
                                 >
                                   <BiDislike className="w-5 h-5" />
@@ -288,10 +296,21 @@ const Home = () => {
                   )}
                 </React.Fragment>
               ))}
+              
+              {hasMore && (
+                <div className="text-center py-6">
+                  <button
+                    onClick={handleLoadMore}
+                    disabled={loading}
+                    className="hover:underline"
+                  >
+                    {loading ? "Loading..." : "Load More"}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
-
 
         <div className="hidden lg:block border-l border-gray-200"></div>
 
@@ -299,13 +318,13 @@ const Home = () => {
         <div className="lg:w-1/3">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6">Latest</h2>
           {latestArticle && latestArticle.length > 0 ? (
-            latestArticle.map((latestArticle, index) => (
-              <div className="p-6" key={index}>
+            latestArticle.map((latestArticle) => (
+              <div className="p-6" key={latestArticle._id}>
                 <div className="mb-4"></div>
                 <div className="flex items-center space-x-2 mb-4">
                   <img
                     src={latestArticle.author.profileImage}
-                    alt={latestArticle.author.profileImage}
+                    alt={`${latestArticle.author.firstName} ${latestArticle.author.lastName}`}
                     className="w-8 h-8 rounded-full object-cover"
                   />
                   <p className="text-gray-700 text-sm">
@@ -323,13 +342,10 @@ const Home = () => {
                 </p>
               </div>
             ))
-
-          ) :
-            (
-              <p>No Atricles</p>
-
-            )}
-
+          ) : (
+            <p>No Articles</p>
+          )}
+          <div className="hidden lg:block border-t border-gray-200 my-4"></div>
         </div>
       </div>
     </div>
