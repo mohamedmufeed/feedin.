@@ -21,7 +21,7 @@ const Home = () => {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false); 
-  const limit = 2;
+  const limit = 7;
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
