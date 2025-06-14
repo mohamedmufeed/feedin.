@@ -24,7 +24,6 @@ api.interceptors.response.use(
                 const newAccessToken = response.data.accessToken;
                 api.defaults.headers.common["Authorization"] =
                     `Bearer ${newAccessToken}`;
-                originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
                 return api(originalRequest);
             } catch (Refresherror) {
                 console.error("Refresh token failed:", Refresherror);
