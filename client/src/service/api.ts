@@ -1,7 +1,7 @@
 import axios from "axios";
 const isProduction = window.location.hostname !== "localhost";
 const api = axios.create({
-  baseURL: isProduction ? "https://feedin.onrender.com/api/" : "http://localhost:3000/api/",
+  baseURL: isProduction ? "https://feedin-nine.vercel.app/api/" : "http://localhost:3000/api/",
   withCredentials: true,
 });
 api.interceptors.response.use(
@@ -24,6 +24,7 @@ api.interceptors.response.use(
                 const newAccessToken = response.data.accessToken;
                 api.defaults.headers.common["Authorization"] =
                     `Bearer ${newAccessToken}`;
+                originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
                 return api(originalRequest);
             } catch (Refresherror) {
                 console.error("Refresh token failed:", Refresherror);
