@@ -1,7 +1,7 @@
 import axios from "axios";
 const isProduction = window.location.hostname !== "localhost";
 const api = axios.create({
-  baseURL: isProduction ? "https://feedin-nine.vercel.app/api/" : "http://localhost:3000/api/",
+  baseURL: isProduction ? "https://feedin.onrender.com/api/" : "http://localhost:3000/api/",
   withCredentials: true,
 });
 api.interceptors.response.use(
